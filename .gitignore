@@ -2,7 +2,7 @@
 .vs/
 
 # Tracked by LFS
-*.uasset
+#*.uasset
 
 # Compiled Object files
 *.slo
