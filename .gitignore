@@ -1,6 +1,9 @@
 # Visual Studio 2015 user specific files
 .vs/
 
+# Tracked by LFS
+*.uasset
+
 # Compiled Object files
 *.slo
 *.lo
