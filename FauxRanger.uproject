@@ -7,6 +7,10 @@
 		{
 			"Name": "Takes",
 			"Enabled": true
+		},
+		{
+			"Name": "ROSIntegration",
+			"Enabled": true
 		}
 	]
 }
