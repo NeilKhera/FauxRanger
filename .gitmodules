@@ -1,3 +1,6 @@
 [submodule "Plugins/ROSIntegration"]
 	path = Plugins/ROSIntegration
 	url = https://github.com/code-iai/ROSIntegration
+[submodule "Plugins/ROSBridge2Unreal"]
+	path = Plugins/ROSBridge2Unreal
+	url = https://github.com/VRGroupRWTH/ROSBridge2Unreal

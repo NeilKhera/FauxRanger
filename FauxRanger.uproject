@@ -10,7 +10,7 @@
 		},
 		{
 			"Name": "ROSIntegration",
-			"Enabled": true
+			"Enabled": false
 		}
 	]
 }
