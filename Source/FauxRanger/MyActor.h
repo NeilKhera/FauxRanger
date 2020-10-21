@@ -5,22 +5,24 @@
 #include "MyActor.generated.h"
 
 UCLASS()
-class FAUXRANGER_API AMyActor : public APawn
-{
-	GENERATED_BODY()
+class FAUXRANGER_API AMyActor : public APawn {
+  GENERATED_BODY()
 	
 public:	
-	AMyActor();
+  AMyActor();
+
+  virtual void Tick(float DeltaTime) override;
 
 protected:
-	virtual void BeginPlay() override;
+  virtual void BeginPlay() override;
 
 public:
-	UPROPERTY()
-	class UTopic* ExampleTopic;
+  UPROPERTY(EditAnywhere)
+  bool EnableROS;
 
-	virtual void Tick(float DeltaTime) override;
+  UPROPERTY()
+  class UTopic* CmdVel;
 
-	UFUNCTION(BlueprintImplementableEvent, Category = "Output")
-	void TeleopEvent(const float & linear, const float & angular);
+  UFUNCTION(BlueprintImplementableEvent, Category = "Output")
+  void TeleopEvent(const float & linear, const float & angular);
 };
