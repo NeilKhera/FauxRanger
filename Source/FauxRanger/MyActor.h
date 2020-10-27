@@ -20,15 +20,18 @@ public:
   UPROPERTY(EditAnywhere) bool EnableROS;
 
   UPROPERTY() class UTopic* CmdVel;
-
-  UPROPERTY() class UTopic* TickerFR;
-  UPROPERTY() class UTopic* TickerFL;
-  UPROPERTY() class UTopic* TickerRR;
-  UPROPERTY() class UTopic* TickerRL;
+  UPROPERTY() class UTopic* WheelVelocityFR;
+  UPROPERTY() class UTopic* WheelVelocityFL;
+  UPROPERTY() class UTopic* WheelVelocityRR;
+  UPROPERTY() class UTopic* WheelVelocityRL;
+  UPROPERTY() class UTopic* IMU;
 
   UFUNCTION(BlueprintImplementableEvent, Category = "Callback")
   void TeleopEvent(const float & linear, const float & angular);
 
   UFUNCTION(BlueprintCallable, Category = "Publisher")
-  void PublishTicks(float ticksFR, float ticksFL, float ticksRR, float ticksRL);
+  void PublishWheelVelocities(float velocityFR, float velocityFL, float velocityRR, float velocityRL);
+
+  UFUNCTION(BlueprintCallable, Category = "Publisher")
+  void PublishIMU();
 };
