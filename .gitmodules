@@ -1,6 +1,3 @@
 [submodule "Plugins/ROSIntegration"]
 	path = Plugins/ROSIntegration
 	url = https://github.com/code-iai/ROSIntegration
-[submodule "Plugins/ROSIntegrationVision"]
-	path = Plugins/ROSIntegrationVision
-	url = https://github.com/code-iai/ROSIntegrationVision
