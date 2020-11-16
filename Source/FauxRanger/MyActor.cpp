@@ -1,10 +1,14 @@
 #include "MyActor.h"
 
+#include "ROSTime.h"
+
 #include "ROSIntegration/Classes/RI/Topic.h"
 #include "ROSIntegration/Classes/ROSIntegrationGameInstance.h"
-#include "ROSIntegration/Public/geometry_msgs/Twist.h"
+
+#include "ROSIntegration/Public/std_msgs/Header.h"
 #include "ROSIntegration/Public/std_msgs/Float32.h"
 #include "ROSIntegration/Public/sensor_msgs/Imu.h"
+#include "ROSIntegration/Public/geometry_msgs/Twist.h"
 
 AMyActor::AMyActor() {
   PrimaryActorTick.bCanEverTick = true;
@@ -12,6 +16,8 @@ AMyActor::AMyActor() {
 
 void AMyActor::BeginPlay() {
   Super::BeginPlay();
+
+  IMUSeq = 0;
 
   if (EnableROS) {
     // Initialize a topic
@@ -75,7 +81,26 @@ void AMyActor::PublishWheelVelocities(float velocityFR, float velocityFL, float 
   WheelVelocityRL->Publish(MessageRL);
 }
 
-void AMyActor::PublishIMU() {
-  // TODO
+void AMyActor::PublishIMU(FQuat orientation, FVector angular_velocity, FVector linear_acceleration) {
+  ROSMessages::std_msgs::Header MessageHeader(IMUSeq++, FROSTime::Now(), FString(TEXT("base_link")));
+
+  TArray<double> covariance;
+  covariance.Init(0.0, 9);
+
+  ROSMessages::geometry_msgs::Quaternion MessageOrientation(orientation);
+  ROSMessages::geometry_msgs::Vector3 MessageAngularVelocity(angular_velocity);
+  ROSMessages::geometry_msgs::Vector3 MessageLinearAcceleration(linear_acceleration);
+
+  TSharedPtr<ROSMessages::sensor_msgs::Imu> MessageIMU(new ROSMessages::sensor_msgs::Imu());
+  MessageIMU->header = MessageHeader;
+  MessageIMU->orientation = MessageOrientation;
+  MessageIMU->angular_velocity = MessageAngularVelocity;
+  MessageIMU->linear_acceleration = MessageLinearAcceleration;
+
+  MessageIMU->orientation_covariance = covariance;
+  MessageIMU->angular_velocity_covariance = covariance;
+  MessageIMU->linear_acceleration_covariance = covariance;
+
+  IMU->Publish(MessageIMU);
 }
 

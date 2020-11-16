@@ -16,6 +16,9 @@ public:
 protected:
   virtual void BeginPlay() override;
 
+private:
+  uint32 IMUSeq;
+
 public:
   UPROPERTY(EditAnywhere) bool EnableROS;
 
@@ -33,5 +36,5 @@ public:
   void PublishWheelVelocities(float velocityFR, float velocityFL, float velocityRR, float velocityRL);
 
   UFUNCTION(BlueprintCallable, Category = "Publisher")
-  void PublishIMU();
+  void PublishIMU(FQuat orientation, FVector angular_velocity, FVector linear_acceleration);
 };
