@@ -36,7 +36,7 @@ void AMyActor::BeginPlay() {
       WheelVelocityFL->Init(rosinst->ROSIntegrationCore, TEXT("/wheels/front/left/velocity"), TEXT("std_msgs/Float32"));
       WheelVelocityRR->Init(rosinst->ROSIntegrationCore, TEXT("/wheels/rear/right/velocity"), TEXT("std_msgs/Float32"));
       WheelVelocityRL->Init(rosinst->ROSIntegrationCore, TEXT("/wheels/rear/left/velocity"), TEXT("std_msgs/Float32"));
-      IMU->Init(rosinst->ROSIntegrationCore, TEXT("/imu"), TEXT("sensor_msgs/Imu"));
+      IMU->Init(rosinst->ROSIntegrationCore, TEXT("/imu/data"), TEXT("sensor_msgs/Imu"));
 
       WheelVelocityFR->Advertise();
       WheelVelocityFL->Advertise();
