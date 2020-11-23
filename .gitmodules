@@ -1,3 +1,6 @@
 [submodule "Plugins/ROSIntegrationVision"]
 	path = Plugins/ROSIntegrationVision
 	url = https://github.com/Nekhera/ROSIntegrationVision
+[submodule "Plugins/ROSIntegration"]
+	path = Plugins/ROSIntegration
+	url = https://github.com/Nekhera/ROSIntegration
