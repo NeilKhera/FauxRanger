@@ -18,6 +18,7 @@ protected:
 
 private:
   uint32 IMUSeq;
+  uint32 OdometrySeq;
 
 public:
   UPROPERTY(EditAnywhere) bool EnableROS;
@@ -28,6 +29,7 @@ public:
   UPROPERTY() class UTopic* WheelVelocityRR;
   UPROPERTY() class UTopic* WheelVelocityRL;
   UPROPERTY() class UTopic* IMU;
+  UPROPERTY() class UTopic* Odometry;
 
   UFUNCTION(BlueprintImplementableEvent, Category = "Callback")
   void TeleopEvent(const float & linear, const float & angular);
@@ -37,4 +39,7 @@ public:
 
   UFUNCTION(BlueprintCallable, Category = "Publisher")
   void PublishIMU(FQuat orientation, FVector angular_velocity, FVector linear_acceleration);
+
+  UFUNCTION(BlueprintCallable, Category = "Publisher")
+  void PublishOdometry(FVector position, FQuat orientation);
 };

@@ -1,5 +1,4 @@
 #include "MyActor.h"
-
 #include "ROSTime.h"
 
 #include "ROSIntegration/Classes/RI/Topic.h"
@@ -7,8 +6,13 @@
 
 #include "ROSIntegration/Public/std_msgs/Header.h"
 #include "ROSIntegration/Public/std_msgs/Float32.h"
+#include "ROSIntegration/Public/nav_msgs/Odometry.h"
 #include "ROSIntegration/Public/sensor_msgs/Imu.h"
+
+#include "ROSIntegration/Public/geometry_msgs/Pose.h"
 #include "ROSIntegration/Public/geometry_msgs/Twist.h"
+#include "ROSIntegration/Public/geometry_msgs/PoseWithCovariance.h"
+#include "ROSIntegration/Public/geometry_msgs/TwistWithCovariance.h"
 
 AMyActor::AMyActor() {
   PrimaryActorTick.bCanEverTick = true;
@@ -18,6 +22,7 @@ void AMyActor::BeginPlay() {
   Super::BeginPlay();
 
   IMUSeq = 0;
+  OdometrySeq = 0;
 
   if (EnableROS) {
     // Initialize a topic
@@ -27,6 +32,7 @@ void AMyActor::BeginPlay() {
     WheelVelocityRR = NewObject<UTopic>(UTopic::StaticClass());
     WheelVelocityRL = NewObject<UTopic>(UTopic::StaticClass());
     IMU = NewObject<UTopic>(UTopic::StaticClass());
+    Odometry = NewObject<UTopic>(UTopic::StaticClass());
 
     UROSIntegrationGameInstance* rosinst = Cast<UROSIntegrationGameInstance>(GetGameInstance());
 
@@ -37,12 +43,14 @@ void AMyActor::BeginPlay() {
       WheelVelocityRR->Init(rosinst->ROSIntegrationCore, TEXT("/wheels/rear/right/velocity"), TEXT("std_msgs/Float32"));
       WheelVelocityRL->Init(rosinst->ROSIntegrationCore, TEXT("/wheels/rear/left/velocity"), TEXT("std_msgs/Float32"));
       IMU->Init(rosinst->ROSIntegrationCore, TEXT("/imu/data"), TEXT("sensor_msgs/Imu"));
+      Odometry->Init(rosinst->ROSIntegrationCore, TEXT("/odom"), TEXT("nav_msgs/Odometry"));
 
       WheelVelocityFR->Advertise();
       WheelVelocityFL->Advertise();
       WheelVelocityRR->Advertise();
       WheelVelocityRL->Advertise();
       IMU->Advertise();
+      Odometry->Advertise();
 
       // Create a std::function callback object
       std::function<void(TSharedPtr<FROSBaseMsg>)> SubscribeCallback = [this](TSharedPtr<FROSBaseMsg> msg) -> void {
@@ -59,7 +67,6 @@ void AMyActor::BeginPlay() {
     } else {
       UE_LOG(LogTemp, Warning, TEXT("Setting up ROS instance failed!"))
     }
-
   } else {
     UE_LOG(LogTemp, Warning, TEXT("ROS is not enabled on Rover actor!"));
   }
@@ -104,3 +111,25 @@ void AMyActor::PublishIMU(FQuat orientation, FVector angular_velocity, FVector l
   IMU->Publish(MessageIMU);
 }
 
+void AMyActor::PublishOdometry(FVector position, FQuat orientation) {
+  ROSMessages::std_msgs::Header MessageHeader(IMUSeq++, FROSTime::Now(), FString(TEXT("base_link")));
+
+  TArray<double> covariance;
+  covariance.Init(0.0, 9);
+
+  ROSMessages::geometry_msgs::Pose MessagePose;
+  MessagePose.position = position;
+  MessagePose.orientation = orientation;
+
+  ROSMessages::geometry_msgs::PoseWithCovariance MessagePoseWithCovariance;
+  MessagePoseWithCovariance.pose = MessagePose;
+  MessagePoseWithCovariance.covariance = covariance;
+
+  TSharedPtr<ROSMessages::nav_msgs::Odometry> MessageOdometry(new ROSMessages::nav_msgs::Odometry());
+  MessageOdometry->header = MessageHeader;
+  MessageOdometry->child_frame_id = FString(TEXT("odom"));
+  MessageOdometry->pose = MessagePoseWithCovariance;
+  //MessageOdometry->twist = ;
+
+  Odometry->Publish(MessageOdometry);
+}
