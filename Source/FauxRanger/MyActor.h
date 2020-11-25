@@ -21,7 +21,6 @@ private:
   uint32 OdometrySeq;
 
 public:
-  UPROPERTY(EditAnywhere) bool EnableROS;
 
   UPROPERTY() class UTopic* CmdVel;
   UPROPERTY() class UTopic* WheelVelocityFR;

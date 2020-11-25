@@ -24,51 +24,47 @@ void AMyActor::BeginPlay() {
   IMUSeq = 0;
   OdometrySeq = 0;
 
-  if (EnableROS) {
-    // Initialize a topic
-    CmdVel = NewObject<UTopic>(UTopic::StaticClass());
-    WheelVelocityFR = NewObject<UTopic>(UTopic::StaticClass());
-    WheelVelocityFL = NewObject<UTopic>(UTopic::StaticClass());
-    WheelVelocityRR = NewObject<UTopic>(UTopic::StaticClass());
-    WheelVelocityRL = NewObject<UTopic>(UTopic::StaticClass());
-    IMU = NewObject<UTopic>(UTopic::StaticClass());
-    Odometry = NewObject<UTopic>(UTopic::StaticClass());
+  // Initialize a topic
+  CmdVel = NewObject<UTopic>(UTopic::StaticClass());
+  WheelVelocityFR = NewObject<UTopic>(UTopic::StaticClass());
+  WheelVelocityFL = NewObject<UTopic>(UTopic::StaticClass());
+  WheelVelocityRR = NewObject<UTopic>(UTopic::StaticClass());
+  WheelVelocityRL = NewObject<UTopic>(UTopic::StaticClass());
+  IMU = NewObject<UTopic>(UTopic::StaticClass());
+  Odometry = NewObject<UTopic>(UTopic::StaticClass());
 
-    UROSIntegrationGameInstance* rosinst = Cast<UROSIntegrationGameInstance>(GetGameInstance());
+  UROSIntegrationGameInstance* rosinst = Cast<UROSIntegrationGameInstance>(GetGameInstance());
 
-    if (rosinst) {
-      CmdVel->Init(rosinst->ROSIntegrationCore, TEXT("/cmd_vel"), TEXT("geometry_msgs/Twist"));
-      WheelVelocityFR->Init(rosinst->ROSIntegrationCore, TEXT("/wheels/front/right/velocity"), TEXT("std_msgs/Float32"));
-      WheelVelocityFL->Init(rosinst->ROSIntegrationCore, TEXT("/wheels/front/left/velocity"), TEXT("std_msgs/Float32"));
-      WheelVelocityRR->Init(rosinst->ROSIntegrationCore, TEXT("/wheels/rear/right/velocity"), TEXT("std_msgs/Float32"));
-      WheelVelocityRL->Init(rosinst->ROSIntegrationCore, TEXT("/wheels/rear/left/velocity"), TEXT("std_msgs/Float32"));
-      IMU->Init(rosinst->ROSIntegrationCore, TEXT("/imu/data"), TEXT("sensor_msgs/Imu"));
-      Odometry->Init(rosinst->ROSIntegrationCore, TEXT("/odom"), TEXT("nav_msgs/Odometry"));
+  if (rosinst && rosinst->bConnectToROS) {
+    CmdVel->Init(rosinst->ROSIntegrationCore, TEXT("/cmd_vel"), TEXT("geometry_msgs/Twist"));
+    WheelVelocityFR->Init(rosinst->ROSIntegrationCore, TEXT("/wheels/front/right/velocity"), TEXT("std_msgs/Float32"));
+    WheelVelocityFL->Init(rosinst->ROSIntegrationCore, TEXT("/wheels/front/left/velocity"), TEXT("std_msgs/Float32"));
+    WheelVelocityRR->Init(rosinst->ROSIntegrationCore, TEXT("/wheels/rear/right/velocity"), TEXT("std_msgs/Float32"));
+    WheelVelocityRL->Init(rosinst->ROSIntegrationCore, TEXT("/wheels/rear/left/velocity"), TEXT("std_msgs/Float32"));
+    IMU->Init(rosinst->ROSIntegrationCore, TEXT("/imu/data"), TEXT("sensor_msgs/Imu"));
+    Odometry->Init(rosinst->ROSIntegrationCore, TEXT("/odom"), TEXT("nav_msgs/Odometry"));
 
-      WheelVelocityFR->Advertise();
-      WheelVelocityFL->Advertise();
-      WheelVelocityRR->Advertise();
-      WheelVelocityRL->Advertise();
-      IMU->Advertise();
-      Odometry->Advertise();
+    WheelVelocityFR->Advertise();
+    WheelVelocityFL->Advertise();
+    WheelVelocityRR->Advertise();
+    WheelVelocityRL->Advertise();
+    IMU->Advertise();
+    Odometry->Advertise();
 
-      // Create a std::function callback object
-      std::function<void(TSharedPtr<FROSBaseMsg>)> SubscribeCallback = [this](TSharedPtr<FROSBaseMsg> msg) -> void {
-        auto Concrete = StaticCastSharedPtr<ROSMessages::geometry_msgs::Twist>(msg);
-        if (Concrete.IsValid()) {
-          this->TeleopEvent(Concrete->linear.x, Concrete->angular.z);
-        }
-        return;
-      };
+    // Create a std::function callback object
+    std::function<void(TSharedPtr<FROSBaseMsg>)> SubscribeCallback = [this](TSharedPtr<FROSBaseMsg> msg) -> void {
+      auto Concrete = StaticCastSharedPtr<ROSMessages::geometry_msgs::Twist>(msg);
+      if (Concrete.IsValid()) {
+        this->TeleopEvent(Concrete->linear.x, Concrete->angular.z);
+      }
+      return;
+    };
 
-      // Subscribe to the topic
-      CmdVel->Subscribe(SubscribeCallback);
+    // Subscribe to the topic
+    CmdVel->Subscribe(SubscribeCallback);
 
-    } else {
-      UE_LOG(LogTemp, Warning, TEXT("Setting up ROS instance failed!"))
-    }
   } else {
-    UE_LOG(LogTemp, Warning, TEXT("ROS is not enabled on Rover actor!"));
+    UE_LOG(LogTemp, Warning, TEXT("Setting up ROS instance failed!"))
   }
 }
 
