@@ -111,7 +111,7 @@ void AMyActor::PublishOdometry(FVector position, FQuat orientation) {
   ROSMessages::std_msgs::Header MessageHeader(IMUSeq++, FROSTime::Now(), FString(TEXT("base_link")));
 
   TArray<double> covariance;
-  covariance.Init(0.0, 9);
+  covariance.Init(0.0, 36);
 
   ROSMessages::geometry_msgs::Pose MessagePose;
   MessagePose.position = position;
@@ -121,11 +121,14 @@ void AMyActor::PublishOdometry(FVector position, FQuat orientation) {
   MessagePoseWithCovariance.pose = MessagePose;
   MessagePoseWithCovariance.covariance = covariance;
 
+  ROSMessages::geometry_msgs::TwistWithCovariance MessageTwistWithCovariance;
+  MessageTwistWithCovariance.covariance = covariance;
+
   TSharedPtr<ROSMessages::nav_msgs::Odometry> MessageOdometry(new ROSMessages::nav_msgs::Odometry());
   MessageOdometry->header = MessageHeader;
   MessageOdometry->child_frame_id = FString(TEXT("odom"));
   MessageOdometry->pose = MessagePoseWithCovariance;
-  //MessageOdometry->twist = ;
+  MessageOdometry->twist = MessageTwistWithCovariance;
 
   Odometry->Publish(MessageOdometry);
 }
