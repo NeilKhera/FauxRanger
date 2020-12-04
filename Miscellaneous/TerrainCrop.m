@@ -1,14 +1,14 @@
 disp('Reading file...');
-fileID = fopen('LDEM_875S_5M.raw');
+fileID = fopen('LDEM_85S_10M.raw');
 A = fread(fileID, [30336, 30336], 'int16=>int16');
 
 disp('File read complete');
 disp(size(A));
 disp('Cropping matrix...');
 
-coord1 = 15169;
-coord2 = 15168 - 5999;
-B = A(coord1:coord1+4032, coord2:coord2+4032);
+coord1 = 10280;
+coord2 = 5140;
+B = A(coord1:coord1+2275, coord2:coord2+2275);
 disp('Matrix crop complete');
 disp(B(100,100));
 

@@ -30,6 +30,9 @@ public:
   UPROPERTY() class UTopic* IMU;
   UPROPERTY() class UTopic* Odometry;
 
+  UFUNCTION(BlueprintCallable, Category = "ROS")
+  void InitializeTopics();
+
   UFUNCTION(BlueprintImplementableEvent, Category = "Callback")
   void TeleopEvent(const float & linear, const float & angular);
 
