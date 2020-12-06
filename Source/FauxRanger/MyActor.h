@@ -10,8 +10,12 @@ class FAUXRANGER_API AMyActor : public APawn {
 	
 public:	
   AMyActor();
-
   virtual void Tick(float DeltaTime) override;
+
+  UFUNCTION(BlueprintCallable, Category = "ROS")
+  void Pause(const bool _Pause = true);
+
+  bool Paused;
 
 protected:
   virtual void BeginPlay() override;
@@ -21,7 +25,6 @@ private:
   uint32 OdometrySeq;
 
 public:
-
   UPROPERTY() class UTopic* CmdVel;
   UPROPERTY() class UTopic* WheelVelocityFR;
   UPROPERTY() class UTopic* WheelVelocityFL;

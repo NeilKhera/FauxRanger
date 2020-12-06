@@ -21,6 +21,8 @@ AMyActor::AMyActor() {
 void AMyActor::BeginPlay() {
   Super::BeginPlay();
 
+  Paused = false;
+
   IMUSeq = 0;
   OdometrySeq = 0;
 
@@ -36,6 +38,10 @@ void AMyActor::BeginPlay() {
 
 void AMyActor::Tick(float DeltaTime) {
   Super::Tick(DeltaTime);
+}
+
+void AMyActor::Pause(const bool _Pause) {
+  Paused = _Pause;
 }
 
 void AMyActor::InitializeTopics() {
@@ -75,6 +81,10 @@ void AMyActor::InitializeTopics() {
 }
 
 void AMyActor::PublishWheelVelocities(float velocityFR, float velocityFL, float velocityRR, float velocityRL) {
+    if (Paused) {
+        return;
+    }
+
     if (WheelVelocityFL->IsAdvertising() && WheelVelocityFR->IsAdvertising() && WheelVelocityRL->IsAdvertising() && WheelVelocityRR->IsAdvertising()) {
         TSharedPtr<ROSMessages::std_msgs::Float32> MessageFR(new ROSMessages::std_msgs::Float32(velocityFR));
         TSharedPtr<ROSMessages::std_msgs::Float32> MessageFL(new ROSMessages::std_msgs::Float32(velocityFL));
@@ -89,6 +99,10 @@ void AMyActor::PublishWheelVelocities(float velocityFR, float velocityFL, float 
 }
 
 void AMyActor::PublishIMU(FQuat orientation, FVector angular_velocity, FVector linear_acceleration) {
+    if (Paused) {
+        return;
+    }
+
     if (IMU->IsAdvertising()) {
         ROSMessages::std_msgs::Header MessageHeader(IMUSeq++, FROSTime::Now(), FString(TEXT("base_link")));
 
@@ -114,6 +128,10 @@ void AMyActor::PublishIMU(FQuat orientation, FVector angular_velocity, FVector l
 }
 
 void AMyActor::PublishOdometry(FVector position, FQuat orientation) {
+    if (Paused) {
+        return;
+    }
+
     if (Odometry->IsAdvertising()) {
         ROSMessages::std_msgs::Header MessageHeader(IMUSeq++, FROSTime::Now(), FString(TEXT("base_link")));
 
