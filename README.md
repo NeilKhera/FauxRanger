@@ -5,7 +5,7 @@
 The Windows and Linux executables can be found under the [Releases](https://github.com/Nekhera/FauxRanger/releases) section.
 ### Build Yourself
 #### Prereqs
-* Unreal Engine v4.25
+* Unreal Engine v4.26
 * [Brushify.io Moon Pack](https://www.unrealengine.com/marketplace/en-US/product/brushify-moon-pack)
 * [Substance in Unreal Engine Plugin](https://www.unrealengine.com/marketplace/en-US/product/substance-plugin)
 > Ensure these are installed before opening the project
@@ -16,8 +16,8 @@ The Windows and Linux executables can be found under the [Releases](https://gith
 3. `File > Package Project > Windows/Linux`
 4. That's it! :)
 ## How to run
-### Pre-run ROS configuration (TODO: ROS is enabled by default but this will change)
-ROS connection is disabled by default. This is to prevent lag when running the sim without ROS. To enable ROS go to `FauxRanger > Saved > Config > Game.ini` and change the IP to the one of your ROS machine (or 127.0.0.1 for a local ROS client).
+### Pre-run ROS configuration
+ROS connection is disabled by default. To enable ROS go to the Pause Menu, enter Network IP of ROS machine and toggle ROS on.
 
 > Windows version: run `FauxRanger.exe`
 
@@ -30,6 +30,7 @@ ROS connection is disabled by default. This is to prevent lag when running the s
 * Left/Right arrow keys to cycle between camera views
 * C for third-person camera
 * P to toggle panel
+* ESC to Pause Menu
 
 #### ROS Controls
 The rover may be driven around through ROS `geometry_msgs/Twist` messages published on the `/cmd_vel` ROStopic.
