@@ -1,0 +1,6 @@
+...
+1 StaticMesh(s) | 0 SkeletalMesh(s) | 0 Alembic(s) | 0 Animation(s) | 0 Camera(s) | 0 Other(s)
+
+[StaticMesh] -> "SM_Collection.fbx" exported in 5.845056533813477 sec.
+C:\Users\Neil\Desktop\FauxRanger\Miscellaneous\Terrain\ExportedFbx\StaticMesh
+
