@@ -21,47 +21,38 @@ AMyActor::AMyActor() {
 void AMyActor::BeginPlay() {
   Super::BeginPlay();
 
-  Paused = false;
+  paused = false;
 
-  IMUSeq = 0;
-  OdometrySeq = 0;
+  imu_seq = 0;
+  odom_seq = 0;
 
   // Initialize a topic
-  CmdVel = NewObject<UTopic>(UTopic::StaticClass());
-  WheelVelocityFR = NewObject<UTopic>(UTopic::StaticClass());
-  WheelVelocityFL = NewObject<UTopic>(UTopic::StaticClass());
-  WheelVelocityRR = NewObject<UTopic>(UTopic::StaticClass());
-  WheelVelocityRL = NewObject<UTopic>(UTopic::StaticClass());
-  IMU = NewObject<UTopic>(UTopic::StaticClass());
-  Odometry = NewObject<UTopic>(UTopic::StaticClass());
+  topic_cmd_vel = NewObject<UTopic>(UTopic::StaticClass());
+  topic_wheels = NewObject<UTopic>(UTopic::StaticClass());
+  topic_imu = NewObject<UTopic>(UTopic::StaticClass());
+  topic_odom = NewObject<UTopic>(UTopic::StaticClass());
 }
 
 void AMyActor::Tick(float DeltaTime) {
   Super::Tick(DeltaTime);
 }
 
-void AMyActor::Pause(const bool _Pause) {
-  Paused = _Pause;
+void AMyActor::Pause(const bool Pause) {
+  paused = Pause;
 }
 
 void AMyActor::InitializeTopics() {
     UROSIntegrationGameInstance* rosinst = Cast<UROSIntegrationGameInstance>(GetGameInstance());
 
     if (rosinst && rosinst->bConnectToROS) {
-        CmdVel->Init(rosinst->ROSIntegrationCore, TEXT("/cmd_vel"), TEXT("geometry_msgs/Twist"));
-        WheelVelocityFR->Init(rosinst->ROSIntegrationCore, TEXT("/wheels/front/right/velocity"), TEXT("std_msgs/Float32"));
-        WheelVelocityFL->Init(rosinst->ROSIntegrationCore, TEXT("/wheels/front/left/velocity"), TEXT("std_msgs/Float32"));
-        WheelVelocityRR->Init(rosinst->ROSIntegrationCore, TEXT("/wheels/rear/right/velocity"), TEXT("std_msgs/Float32"));
-        WheelVelocityRL->Init(rosinst->ROSIntegrationCore, TEXT("/wheels/rear/left/velocity"), TEXT("std_msgs/Float32"));
-        IMU->Init(rosinst->ROSIntegrationCore, TEXT("/imu/data"), TEXT("sensor_msgs/Imu"));
-        Odometry->Init(rosinst->ROSIntegrationCore, TEXT("/odom"), TEXT("nav_msgs/Odometry"));
+        topic_cmd_vel->Init(rosinst->ROSIntegrationCore, TEXT("/cmd_vel"), TEXT("geometry_msgs/Twist"));
+        topic_wheels->Init(rosinst->ROSIntegrationCore, TEXT("/wheels"), TEXT("std_msgs/Int32MultiArray"));;
+        topic_imu->Init(rosinst->ROSIntegrationCore, TEXT("/imu/data"), TEXT("sensor_msgs/Imu"));
+        topic_odom->Init(rosinst->ROSIntegrationCore, TEXT("/odom"), TEXT("nav_msgs/Odometry"));
 
-        WheelVelocityFR->Advertise();
-        WheelVelocityFL->Advertise();
-        WheelVelocityRR->Advertise();
-        WheelVelocityRL->Advertise();
-        IMU->Advertise();
-        Odometry->Advertise();
+        topic_wheels->Advertise();
+        topic_imu->Advertise();
+        topic_odom->Advertise();
 
         // Create a std::function callback object
         std::function<void(TSharedPtr<FROSBaseMsg>)> SubscribeCallback = [this](TSharedPtr<FROSBaseMsg> msg) -> void {
@@ -73,38 +64,38 @@ void AMyActor::InitializeTopics() {
         };
 
         // Subscribe to the topic
-        CmdVel->Subscribe(SubscribeCallback);
+        topic_cmd_vel->Subscribe(SubscribeCallback);
     }
     else {
         UE_LOG(LogTemp, Warning, TEXT("Setting up ROS instance failed!"));
     }
 }
 
-void AMyActor::PublishWheelVelocities(float velocityFR, float velocityFL, float velocityRR, float velocityRL) {
-    if (Paused) {
+void AMyActor::PublishWheelData(float front_right, float velocityFL, float velocityRR, float velocityRL) {
+    if (paused) {
         return;
     }
 
-    if (WheelVelocityFL->IsAdvertising() && WheelVelocityFR->IsAdvertising() && WheelVelocityRL->IsAdvertising() && WheelVelocityRR->IsAdvertising()) {
-        TSharedPtr<ROSMessages::std_msgs::Float32> MessageFR(new ROSMessages::std_msgs::Float32(velocityFR));
-        TSharedPtr<ROSMessages::std_msgs::Float32> MessageFL(new ROSMessages::std_msgs::Float32(velocityFL));
-        TSharedPtr<ROSMessages::std_msgs::Float32> MessageRR(new ROSMessages::std_msgs::Float32(velocityRR));
-        TSharedPtr<ROSMessages::std_msgs::Float32> MessageRL(new ROSMessages::std_msgs::Float32(velocityRL));
+    if (topic_wheels->IsAdvertising()) {
+        //TSharedPtr<ROSMessages::std_msgs::Float32> MessageFR(new ROSMessages::std_msgs::Float32(velocityFR));
+        //TSharedPtr<ROSMessages::std_msgs::Float32> MessageFL(new ROSMessages::std_msgs::Float32(velocityFL));
+        //TSharedPtr<ROSMessages::std_msgs::Float32> MessageRR(new ROSMessages::std_msgs::Float32(velocityRR));
+        //TSharedPtr<ROSMessages::std_msgs::Float32> MessageRL(new ROSMessages::std_msgs::Float32(velocityRL));
 
-        WheelVelocityFR->Publish(MessageFR);
-        WheelVelocityFL->Publish(MessageFL);
-        WheelVelocityRR->Publish(MessageRR);
-        WheelVelocityRL->Publish(MessageRL);
+        //WheelVelocityFR->Publish(MessageFR);
+        //WheelVelocityFL->Publish(MessageFL);
+        //WheelVelocityRR->Publish(MessageRR);
+        //WheelVelocityRL->Publish(MessageRL);
     }
 }
 
 void AMyActor::PublishIMU(FQuat orientation, FVector angular_velocity, FVector linear_acceleration) {
-    if (Paused) {
+    if (paused) {
         return;
     }
 
-    if (IMU->IsAdvertising()) {
-        ROSMessages::std_msgs::Header MessageHeader(IMUSeq++, FROSTime::Now(), FString(TEXT("base_link")));
+    if (topic_imu->IsAdvertising()) {
+        ROSMessages::std_msgs::Header MessageHeader(imu_seq++, FROSTime::Now(), FString(TEXT("base_link")));
 
         TArray<double> covariance;
         covariance.Init(0.0, 9);
@@ -123,17 +114,17 @@ void AMyActor::PublishIMU(FQuat orientation, FVector angular_velocity, FVector l
         MessageIMU->angular_velocity_covariance = covariance;
         MessageIMU->linear_acceleration_covariance = covariance;
 
-        IMU->Publish(MessageIMU);
+        topic_imu->Publish(MessageIMU);
     }
 }
 
 void AMyActor::PublishOdometry(FVector position, FQuat orientation) {
-    if (Paused) {
+    if (paused) {
         return;
     }
 
-    if (Odometry->IsAdvertising()) {
-        ROSMessages::std_msgs::Header MessageHeader(IMUSeq++, FROSTime::Now(), FString(TEXT("base_link")));
+    if (topic_odom->IsAdvertising()) {
+        ROSMessages::std_msgs::Header MessageHeader(odom_seq++, FROSTime::Now(), FString(TEXT("base_link")));
 
         TArray<double> covariance;
         covariance.Init(0.0, 36);
@@ -155,6 +146,6 @@ void AMyActor::PublishOdometry(FVector position, FQuat orientation) {
         MessageOdometry->pose = MessagePoseWithCovariance;
         MessageOdometry->twist = MessageTwistWithCovariance;
 
-        Odometry->Publish(MessageOdometry);
+        topic_odom->Publish(MessageOdometry);
     }
 }
