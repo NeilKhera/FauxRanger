@@ -1,4 +1,4 @@
-[![alt text](https://i.imgur.com/peAF6rc.png)](https://neilkhera.com)
+[![alt text](https://i.imgur.com/prDKkMd.png)](https://neilkhera.com)
 
 ## Installation
 ### Download Executable
