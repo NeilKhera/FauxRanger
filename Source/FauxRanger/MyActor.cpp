@@ -25,15 +25,6 @@ void AMyActor::BeginPlay() {
   paused = false;
   odom_seq = 0;
   imu_seq = 0;
-
-  // Initialize a topic
-  topic_cmd_vel = NewObject<UTopic>(UTopic::StaticClass());
-  topic_wheels = NewObject<UTopic>(UTopic::StaticClass());
-  topic_odom = NewObject<UTopic>(UTopic::StaticClass());
-  topic_imu = NewObject<UTopic>(UTopic::StaticClass());
-
-  // TESTING
-  InitializeTopics();
 }
 
 void AMyActor::Tick(float DeltaTime) {
@@ -48,14 +39,20 @@ void AMyActor::InitializeTopics() {
     UROSIntegrationGameInstance* rosinst = Cast<UROSIntegrationGameInstance>(GetGameInstance());
 
     if (rosinst && rosinst->bConnectToROS) {
+        // Initialize a topic
+        topic_cmd_vel = NewObject<UTopic>(UTopic::StaticClass());
+        topic_wheels = NewObject<UTopic>(UTopic::StaticClass());
+        topic_odom = NewObject<UTopic>(UTopic::StaticClass());
+        //topic_imu = NewObject<UTopic>(UTopic::StaticClass());
+
         topic_cmd_vel->Init(rosinst->ROSIntegrationCore, TEXT("/moon_ranger_velocity_controller/cmd_vel"), TEXT("geometry_msgs/Twist"));
         topic_wheels->Init(rosinst->ROSIntegrationCore, TEXT("/wheels"), TEXT("std_msgs/Int32MultiArray"));
         topic_odom->Init(rosinst->ROSIntegrationCore, TEXT("/moon_ranger_velocity_controller/odom"), TEXT("nav_msgs/Odometry"));
-        topic_imu->Init(rosinst->ROSIntegrationCore, TEXT("/imu/data"), TEXT("sensor_msgs/Imu"));
+        //topic_imu->Init(rosinst->ROSIntegrationCore, TEXT("/imu/data"), TEXT("sensor_msgs/Imu"));
 
         topic_wheels->Advertise();
         topic_odom->Advertise();
-        topic_imu->Advertise();
+        //topic_imu->Advertise();
 
         // Create a std::function callback object
         std::function<void(TSharedPtr<FROSBaseMsg>)> SubscribeCallback = [this](TSharedPtr<FROSBaseMsg> msg) -> void {
@@ -80,7 +77,16 @@ void AMyActor::PublishWheelData(int32 rear_left, int32 rear_right, int32 front_l
     }
 
     if (topic_wheels->IsAdvertising()) {
+        ROSMessages::std_msgs::MultiArrayDimension MessageDim;
+
+        MessageDim.label = FString(TEXT("wheels"));
+        MessageDim.size = 4;
+        MessageDim.stride = 4;
+
         TSharedPtr<ROSMessages::std_msgs::Int32MultiArray> MessageInt32MultiArray(new ROSMessages::std_msgs::Int32MultiArray());
+
+        MessageInt32MultiArray->layout.dim.Add(MessageDim);
+        MessageInt32MultiArray->layout.data_offset = 0;
 
         MessageInt32MultiArray->data.Add(rear_left);
         MessageInt32MultiArray->data.Add(rear_right);
