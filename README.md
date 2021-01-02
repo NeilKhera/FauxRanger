@@ -43,7 +43,7 @@ The rover model may be changed in the Settings menu. Select an Environment to sp
 * Left/Right arrow keys to cycle between camera views
 * C for third-person camera
 * P to toggle panel
-* ESC to Pause Menu
+* ESC or M to Pause Menu
 * O for solar panel camera view (PitRanger only)
 
 #### ROS Controls
