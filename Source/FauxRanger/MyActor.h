@@ -40,7 +40,7 @@ public:
   void PublishWheelData(int32 rear_left, int32 rear_right, int32 front_left, int32 front_right);
 
   UFUNCTION(BlueprintCallable, Category = "Publisher")
-  void PublishOdometry(FVector position, FQuat orientation);
+  void PublishOdometry(FVector position, FQuat orientation, FVector linear_velocity, FVector angular_velocity);
 
   UFUNCTION(BlueprintCallable, Category = "Publisher")
   void PublishIMU(FQuat orientation, FVector angular_velocity, FVector linear_acceleration);

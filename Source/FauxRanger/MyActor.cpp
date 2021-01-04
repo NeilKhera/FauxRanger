@@ -47,7 +47,7 @@ void AMyActor::InitializeTopics() {
 
         topic_cmd_vel->Init(rosinst->ROSIntegrationCore, TEXT("/moon_ranger_velocity_controller/cmd_vel"), TEXT("geometry_msgs/Twist"));
         topic_wheels->Init(rosinst->ROSIntegrationCore, TEXT("/wheels"), TEXT("std_msgs/Int32MultiArray"));
-        topic_odom->Init(rosinst->ROSIntegrationCore, TEXT("/odometry/filtered"), TEXT("nav_msgs/Odometry"));
+        topic_odom->Init(rosinst->ROSIntegrationCore, TEXT("/moon_ranger_velocity_controller/odom"), TEXT("nav_msgs/Odometry"));
         //topic_imu->Init(rosinst->ROSIntegrationCore, TEXT("/imu/data"), TEXT("sensor_msgs/Imu"));
 
         topic_wheels->Advertise();
@@ -97,7 +97,7 @@ void AMyActor::PublishWheelData(int32 rear_left, int32 rear_right, int32 front_l
     }
 }
 
-void AMyActor::PublishOdometry(FVector position, FQuat orientation) {
+void AMyActor::PublishOdometry(FVector position, FQuat orientation, FVector linear_velocity, FVector angular_velocity) {
     if (paused) {
         return;
     }
@@ -124,7 +124,12 @@ void AMyActor::PublishOdometry(FVector position, FQuat orientation) {
         MessagePoseWithCovariance.pose = MessagePose;
         MessagePoseWithCovariance.covariance = covariance;
 
+        ROSMessages::geometry_msgs::Twist MessageTwist;
+        MessageTwist.linear = linear_velocity;
+        MessageTwist.angular = angular_velocity;
+
         ROSMessages::geometry_msgs::TwistWithCovariance MessageTwistWithCovariance;
+        MessageTwistWithCovariance.twist = MessageTwist;
         MessageTwistWithCovariance.covariance = covariance;
 
         TSharedPtr<ROSMessages::nav_msgs::Odometry> MessageOdometry(new ROSMessages::nav_msgs::Odometry());
