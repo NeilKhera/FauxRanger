@@ -21,7 +21,7 @@ To enable ROS communication, a ROSbridge server must be started on a compatible 
 * ROS Melodic
 * ROSbridge Suite v0.11.10
 
-> NOTE! ROS Noetic running on Ubuntu 20.04 or newer versions of ROSbridge suite are NOT currently supported. This is dies to an incompatibility between the ROSintegration plugin and Python 3. This will be fixed in the future.
+> NOTE! ROS Noetic running on Ubuntu 20.04 or newer versions of ROSbridge suite are NOT currently supported. This is due to an incompatibility between the ROSintegration plugin and Python 3. This will be fixed in a future release.
 
 To build and install ROSbridge Suite v0.11.10, checkout [this](https://github.com/RobotWebTools/rosbridge_suite/commit/b04345fab6b2394adb74ec29297356d8ec552be9) commit into your catkin workspace and build as normal. The newest version of the apt package (ros-melodic-rosbridge-suite) is NOT supported.
 
