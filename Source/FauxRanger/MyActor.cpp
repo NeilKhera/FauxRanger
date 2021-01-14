@@ -1,11 +1,13 @@
 #include "MyActor.h"
 #include "ROSTime.h"
+#include "Runtime/Engine/Public/DrawDebugHelpers.h"
 
 #include "ROSIntegration/Classes/RI/Topic.h"
 #include "ROSIntegration/Classes/ROSIntegrationGameInstance.h"
 
 #include "ROSIntegration/Public/sensor_msgs/Imu.h"
 #include "ROSIntegration/Public/nav_msgs/Odometry.h"
+#include "ROSIntegration/Public/rasm_msgs/Waypoint.h"
 
 #include "ROSIntegration/Public/std_msgs/Header.h"
 #include "ROSIntegration/Public/std_msgs/Int32MultiArray.h"
@@ -35,27 +37,73 @@ void AMyActor::Pause(const bool pause) {
   paused = pause;
 }
 
+float AMyActor::GetSurface(FVector2D Point, bool bDrawDebugLines) {
+    UWorld* World { this->GetWorld() };
+
+    if (World) {
+        FVector StartLocation { Point.X, Point.Y, 10000 };    // Raytrace starting point.
+        FVector EndLocation { Point.X, Point.Y, -10000 };     // Raytrace end point.
+
+        // Raytrace for overlapping actors.
+        FHitResult HitResult;
+        World->LineTraceSingleByObjectType(
+            OUT HitResult,
+            StartLocation,
+            EndLocation,
+            FCollisionObjectQueryParams(ECollisionChannel::ECC_WorldStatic),
+            FCollisionQueryParams()
+        );
+
+        // Draw debug line.
+        if (bDrawDebugLines) {
+            FColor LineColor;
+
+            if (HitResult.GetActor()) {
+                LineColor = FColor::Red;
+            } else {
+                LineColor = FColor::Green;
+            }
+
+            DrawDebugLine(World, StartLocation, EndLocation, LineColor, true, 5.f, 0.f, 10.f);
+        }
+
+        // Return Z location.
+        if (HitResult.GetActor()) {
+            return HitResult.ImpactPoint.Z;
+        }
+    }
+
+    return 0;
+}
+
 void AMyActor::InitializeTopics() {
     UROSIntegrationGameInstance* rosinst = Cast<UROSIntegrationGameInstance>(GetGameInstance());
 
     if (rosinst && rosinst->bConnectToROS) {
         // Initialize a topic
+        topic_goal = NewObject<UTopic>(UTopic::StaticClass());
         topic_cmd_vel = NewObject<UTopic>(UTopic::StaticClass());
         topic_wheels = NewObject<UTopic>(UTopic::StaticClass());
         topic_odom = NewObject<UTopic>(UTopic::StaticClass());
-        //topic_imu = NewObject<UTopic>(UTopic::StaticClass());
 
+        topic_goal->Init(rosinst->ROSIntegrationCore, TEXT("/rasm/goal_command"), TEXT("rasm_msgs/Waypoint"));
         topic_cmd_vel->Init(rosinst->ROSIntegrationCore, TEXT("/moon_ranger_velocity_controller/cmd_vel"), TEXT("geometry_msgs/Twist"));
         topic_wheels->Init(rosinst->ROSIntegrationCore, TEXT("/wheels"), TEXT("std_msgs/Int32MultiArray"));
         topic_odom->Init(rosinst->ROSIntegrationCore, TEXT("/moon_ranger_velocity_controller/odom"), TEXT("nav_msgs/Odometry"));
-        //topic_imu->Init(rosinst->ROSIntegrationCore, TEXT("/imu/data"), TEXT("sensor_msgs/Imu"));
 
         topic_wheels->Advertise();
         topic_odom->Advertise();
-        //topic_imu->Advertise();
 
         // Create a std::function callback object
-        std::function<void(TSharedPtr<FROSBaseMsg>)> SubscribeCallback = [this](TSharedPtr<FROSBaseMsg> msg) -> void {
+        std::function<void(TSharedPtr<FROSBaseMsg>)> GoalCallback = [this](TSharedPtr<FROSBaseMsg> msg) -> void {
+            auto Concrete = StaticCastSharedPtr<ROSMessages::rasm_msgs::Waypoint>(msg);
+            if (Concrete.IsValid()) {
+                // Spawn Waypoint
+            }
+            return;
+        };
+
+        std::function<void(TSharedPtr<FROSBaseMsg>)> CmdVelCallback = [this](TSharedPtr<FROSBaseMsg> msg) -> void {
             auto Concrete = StaticCastSharedPtr<ROSMessages::geometry_msgs::Twist>(msg);
             if (Concrete.IsValid()) {
                 this->TeleopEvent(Concrete->linear.x, Concrete->angular.z);
@@ -64,7 +112,8 @@ void AMyActor::InitializeTopics() {
         };
 
         // Subscribe to the topic
-        topic_cmd_vel->Subscribe(SubscribeCallback);
+        topic_goal->Subscribe(GoalCallback);
+        topic_cmd_vel->Subscribe(CmdVelCallback);
     }
     else {
         UE_LOG(LogTemp, Warning, TEXT("Setting up ROS instance failed!"));

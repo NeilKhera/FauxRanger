@@ -22,6 +22,8 @@ private:
   uint32 odom_seq;
 
 public:
+  UPROPERTY() class UTopic* topic_goal;
+
   UPROPERTY() class UTopic* topic_cmd_vel;
   UPROPERTY() class UTopic* topic_wheels;
   UPROPERTY() class UTopic* topic_imu;
@@ -32,6 +34,9 @@ public:
 
   UFUNCTION(BlueprintCallable, Category = "ROS")
   void Pause(const bool pause = true);
+
+  UFUNCTION(BlueprintPure, meta = (AdvancedDisplay = "bDrawDebugLines"))
+  float GetSurface(FVector2D Point, bool bDrawDebugLines = false);
 
   UFUNCTION(BlueprintCallable, Category = "ROS")
   void InitializeTopics();
