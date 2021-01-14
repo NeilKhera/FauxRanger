@@ -7,7 +7,7 @@
 
 #include "ROSIntegration/Public/sensor_msgs/Imu.h"
 #include "ROSIntegration/Public/nav_msgs/Odometry.h"
-#include "ROSIntegration/Public/rasm_msgs/Waypoint.h"
+#include "ROSIntegration/Public/rasm/RASM_GOAL_MSG.h"
 
 #include "ROSIntegration/Public/std_msgs/Header.h"
 #include "ROSIntegration/Public/std_msgs/Int32MultiArray.h"
@@ -18,23 +18,28 @@
 #include "ROSIntegration/Public/geometry_msgs/TwistWithCovariance.h"
 
 AMyActor::AMyActor() {
-  PrimaryActorTick.bCanEverTick = true;
+    PrimaryActorTick.bCanEverTick = true;
 }
 
 void AMyActor::BeginPlay() {
-  Super::BeginPlay();
+    Super::BeginPlay();
 
-  paused = false;
-  odom_seq = 0;
-  imu_seq = 0;
+    paused = false;
+    odom_seq = 0;
+    imu_seq = 0;
 }
 
 void AMyActor::Tick(float DeltaTime) {
-  Super::Tick(DeltaTime);
+    Super::Tick(DeltaTime);
+
+    if (spawn_waypoint) {
+        spawn_waypoint = false;
+        this->SpawnEvent(waypoint_location, waypoint_rotation, waypoint_scale);
+    }
 }
 
 void AMyActor::Pause(const bool pause) {
-  paused = pause;
+    paused = pause;
 }
 
 float AMyActor::GetSurface(FVector2D Point, bool bDrawDebugLines) {
@@ -86,7 +91,7 @@ void AMyActor::InitializeTopics() {
         topic_wheels = NewObject<UTopic>(UTopic::StaticClass());
         topic_odom = NewObject<UTopic>(UTopic::StaticClass());
 
-        topic_goal->Init(rosinst->ROSIntegrationCore, TEXT("/rasm/goal_command"), TEXT("rasm_msgs/Waypoint"));
+        topic_goal->Init(rosinst->ROSIntegrationCore, TEXT("/rover_executive/goal_command"), TEXT("rasm/RASM_GOAL_MSG"));
         topic_cmd_vel->Init(rosinst->ROSIntegrationCore, TEXT("/moon_ranger_velocity_controller/cmd_vel"), TEXT("geometry_msgs/Twist"));
         topic_wheels->Init(rosinst->ROSIntegrationCore, TEXT("/wheels"), TEXT("std_msgs/Int32MultiArray"));
         topic_odom->Init(rosinst->ROSIntegrationCore, TEXT("/moon_ranger_velocity_controller/odom"), TEXT("nav_msgs/Odometry"));
@@ -96,9 +101,13 @@ void AMyActor::InitializeTopics() {
 
         // Create a std::function callback object
         std::function<void(TSharedPtr<FROSBaseMsg>)> GoalCallback = [this](TSharedPtr<FROSBaseMsg> msg) -> void {
-            auto Concrete = StaticCastSharedPtr<ROSMessages::rasm_msgs::Waypoint>(msg);
+            auto Concrete = StaticCastSharedPtr<ROSMessages::rasm::RASM_GOAL_MSG>(msg);
             if (Concrete.IsValid()) {
-                // Spawn Waypoint
+                this->waypoint_location = FVector(Concrete->origin_x_meters * 100, Concrete->origin_y_meters * 100, GetSurface(FVector2D(Concrete->origin_x_meters * 100, Concrete->origin_y_meters * 100), false));
+                this->waypoint_rotation = FRotator(0.0f, 0.0f, Concrete->orientation_radians);
+                this->waypoint_scale = FVector(Concrete->length_meters, Concrete->width_meters, 1.0f);
+
+                this->spawn_waypoint = true;
             }
             return;
         };

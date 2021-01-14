@@ -2,6 +2,8 @@
 
 #include "CoreMinimal.h"
 #include "GameFramework/Pawn.h"
+#include "Templates/SubclassOf.h"
+
 #include "MyActor.generated.h"
 
 UCLASS()
@@ -22,12 +24,23 @@ private:
   uint32 odom_seq;
 
 public:
-  UPROPERTY() class UTopic* topic_goal;
+  UPROPERTY() bool spawn_waypoint;
 
+  UPROPERTY() FVector waypoint_location;
+  UPROPERTY() FRotator waypoint_rotation;
+  UPROPERTY() FVector waypoint_scale;
+
+  UPROPERTY() class UTopic* topic_goal;
   UPROPERTY() class UTopic* topic_cmd_vel;
   UPROPERTY() class UTopic* topic_wheels;
   UPROPERTY() class UTopic* topic_imu;
   UPROPERTY() class UTopic* topic_odom;
+  
+  UPROPERTY(EditDefaultsOnly, Category = "Spawn")
+  TSubclassOf<AActor> WaypointActor;
+
+  UFUNCTION(BlueprintImplementableEvent, Category = "Callback")
+  void SpawnEvent(const FVector & location, const FRotator & rotation, const FVector & scale);
 
   UFUNCTION(BlueprintImplementableEvent, Category = "Callback")
   void TeleopEvent(const float & linear, const float & angular);
