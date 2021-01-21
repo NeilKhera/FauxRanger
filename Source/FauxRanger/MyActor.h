@@ -8,58 +8,63 @@
 
 UCLASS()
 class FAUXRANGER_API AMyActor : public APawn {
-  GENERATED_BODY()
-	
-public:	
-  AMyActor();
-  virtual void Tick(float DeltaTime) override;
-
-protected:
-  virtual void BeginPlay() override;
-
-private:
-  bool paused;
-
-  uint32 imu_seq;
-  uint32 odom_seq;
+  
+	GENERATED_BODY()
 
 public:
-  UPROPERTY() bool spawn_waypoint;
+	UPROPERTY() class UTopic* topic_sun_seeker;
+	UPROPERTY() class UTopic* topic_goal;
+	UPROPERTY() class UTopic* topic_cmd_vel;
 
-  UPROPERTY() FVector waypoint_location;
-  UPROPERTY() FRotator waypoint_rotation;
-  UPROPERTY() FVector waypoint_scale;
+	UPROPERTY() class UTopic* topic_wheels;
+	UPROPERTY() class UTopic* topic_odom;
+	UPROPERTY() class UTopic* topic_clock;
 
-  UPROPERTY() class UTopic* topic_goal;
-  UPROPERTY() class UTopic* topic_cmd_vel;
-  UPROPERTY() class UTopic* topic_wheels;
-  UPROPERTY() class UTopic* topic_imu;
-  UPROPERTY() class UTopic* topic_odom;
+private:
+	uint32 imu_seq = 0;
+	uint32 odom_seq = 0;
+
+	bool paused = false;
+	bool spawn_waypoint = false;
+
+	FVector waypoint_location;
+	FRotator waypoint_rotation;
+	FVector waypoint_scale;
   
-  UPROPERTY(EditDefaultsOnly, Category = "Spawn")
-  TSubclassOf<AActor> WaypointActor;
+	UPROPERTY(EditDefaultsOnly, Category = "Spawn")
+	TSubclassOf<AActor> WaypointActor;
 
-  UFUNCTION(BlueprintImplementableEvent, Category = "Callback")
-  void SpawnEvent(const FVector & location, const FRotator & rotation, const FVector & scale);
+public:
+	AMyActor();
+	virtual void BeginPlay() override;
+	virtual void Tick(float DeltaTime) override;
 
-  UFUNCTION(BlueprintImplementableEvent, Category = "Callback")
-  void TeleopEvent(const float & linear, const float & angular);
+	UFUNCTION(BlueprintImplementableEvent, Category = "Callback")
+	void VectorEvent(const float & x, const float & y, const float & z);
 
-  UFUNCTION(BlueprintCallable, Category = "ROS")
-  void Pause(const bool pause = true);
+	UFUNCTION(BlueprintImplementableEvent, Category = "Callback")
+	void SpawnEvent(const FVector & location, const FRotator & rotation, const FVector & scale);
 
-  UFUNCTION(BlueprintPure, meta = (AdvancedDisplay = "bDrawDebugLines"))
-  float GetSurface(FVector2D Point, bool bDrawDebugLines = false);
+	UFUNCTION(BlueprintImplementableEvent, Category = "Callback")
+	void TeleopEvent(const float & linear, const float & angular);
 
-  UFUNCTION(BlueprintCallable, Category = "ROS")
-  void InitializeTopics();
+	UFUNCTION(BlueprintCallable, Category = "ROS")
+	void Pause(const bool pause = true);
 
-  UFUNCTION(BlueprintCallable, Category = "Publisher")
-  void PublishWheelData(int32 rear_left, int32 rear_right, int32 front_left, int32 front_right);
+	UFUNCTION(BlueprintCallable, Category = "ROS")
+	void InitializeTopics();
 
-  UFUNCTION(BlueprintCallable, Category = "Publisher")
-  void PublishOdometry(FVector position, FQuat orientation, FVector linear_velocity, FVector angular_velocity);
+	UFUNCTION(BlueprintCallable, Category = "Publisher")
+	void PublishWheelData(int32 rear_left, int32 rear_right, int32 front_left, int32 front_right);
 
-  UFUNCTION(BlueprintCallable, Category = "Publisher")
-  void PublishIMU(FQuat orientation, FVector angular_velocity, FVector linear_acceleration);
+	UFUNCTION(BlueprintCallable, Category = "Publisher")
+	void PublishOdometry(FVector position, FQuat orientation, FVector linear_velocity, FVector angular_velocity);
+
+	UFUNCTION(BlueprintCallable, Category = "Publisher")
+	void PublishClock();
+
+protected:
+	UFUNCTION(BlueprintPure, meta = (AdvancedDisplay = "bDrawDebugLines"))
+	float GetSurface(FVector2D Point, bool bDrawDebugLines = false);
+
 };

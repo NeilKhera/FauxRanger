@@ -7,15 +7,18 @@
 
 #include "ROSIntegration/Public/sensor_msgs/Imu.h"
 #include "ROSIntegration/Public/nav_msgs/Odometry.h"
+#include "ROSIntegration/Public/rosgraph_msgs/Clock.h"
 #include "ROSIntegration/Public/rasm/RASM_GOAL_MSG.h"
 
 #include "ROSIntegration/Public/std_msgs/Header.h"
 #include "ROSIntegration/Public/std_msgs/Int32MultiArray.h"
 
+#include "ROSIntegration/Public/geometry_msgs/Vector3.h"
 #include "ROSIntegration/Public/geometry_msgs/Pose.h"
 #include "ROSIntegration/Public/geometry_msgs/Twist.h"
 #include "ROSIntegration/Public/geometry_msgs/PoseWithCovariance.h"
 #include "ROSIntegration/Public/geometry_msgs/TwistWithCovariance.h"
+
 
 AMyActor::AMyActor() {
     PrimaryActorTick.bCanEverTick = true;
@@ -23,10 +26,6 @@ AMyActor::AMyActor() {
 
 void AMyActor::BeginPlay() {
     Super::BeginPlay();
-
-    paused = false;
-    odom_seq = 0;
-    imu_seq = 0;
 }
 
 void AMyActor::Tick(float DeltaTime) {
@@ -42,55 +41,18 @@ void AMyActor::Pause(const bool pause) {
     paused = pause;
 }
 
-float AMyActor::GetSurface(FVector2D Point, bool bDrawDebugLines) {
-    UWorld* World { this->GetWorld() };
-
-    if (World) {
-        FVector StartLocation { Point.X, Point.Y, 10000 };    // Raytrace starting point.
-        FVector EndLocation { Point.X, Point.Y, -10000 };     // Raytrace end point.
-
-        // Raytrace for overlapping actors.
-        FHitResult HitResult;
-        World->LineTraceSingleByObjectType(
-            OUT HitResult,
-            StartLocation,
-            EndLocation,
-            FCollisionObjectQueryParams(ECollisionChannel::ECC_WorldStatic),
-            FCollisionQueryParams()
-        );
-
-        // Draw debug line.
-        if (bDrawDebugLines) {
-            FColor LineColor;
-
-            if (HitResult.GetActor()) {
-                LineColor = FColor::Red;
-            } else {
-                LineColor = FColor::Green;
-            }
-
-            DrawDebugLine(World, StartLocation, EndLocation, LineColor, true, 5.f, 0.f, 10.f);
-        }
-
-        // Return Z location.
-        if (HitResult.GetActor()) {
-            return HitResult.ImpactPoint.Z;
-        }
-    }
-
-    return 0;
-}
-
 void AMyActor::InitializeTopics() {
     UROSIntegrationGameInstance* rosinst = Cast<UROSIntegrationGameInstance>(GetGameInstance());
 
     if (rosinst && rosinst->bConnectToROS) {
         // Initialize a topic
+        topic_sun_seeker = NewObject<UTopic>(UTopic::StaticClass());
         topic_goal = NewObject<UTopic>(UTopic::StaticClass());
         topic_cmd_vel = NewObject<UTopic>(UTopic::StaticClass());
         topic_wheels = NewObject<UTopic>(UTopic::StaticClass());
         topic_odom = NewObject<UTopic>(UTopic::StaticClass());
 
+        topic_sun_seeker->Init(rosinst->ROSIntegrationCore, TEXT("/sun_seeker/vector"), TEXT("geometry_msgs/Vector3"));
         topic_goal->Init(rosinst->ROSIntegrationCore, TEXT("/rover_executive/goal_command"), TEXT("rasm/RASM_GOAL_MSG"));
         topic_cmd_vel->Init(rosinst->ROSIntegrationCore, TEXT("/moon_ranger_velocity_controller/cmd_vel"), TEXT("geometry_msgs/Twist"));
         topic_wheels->Init(rosinst->ROSIntegrationCore, TEXT("/wheels"), TEXT("std_msgs/Int32MultiArray"));
@@ -99,7 +61,13 @@ void AMyActor::InitializeTopics() {
         topic_wheels->Advertise();
         topic_odom->Advertise();
 
-        // Create a std::function callback object
+        std::function<void(TSharedPtr<FROSBaseMsg>)> SunSeekerCallback = [this](TSharedPtr<FROSBaseMsg> msg) -> void {
+            auto Concrete = StaticCastSharedPtr<ROSMessages::geometry_msgs::Vector3>(msg);
+            if (Concrete.IsValid()) {
+                this->VectorEvent(Concrete->x, Concrete->y, Concrete->z);
+            }
+        };
+
         std::function<void(TSharedPtr<FROSBaseMsg>)> GoalCallback = [this](TSharedPtr<FROSBaseMsg> msg) -> void {
             auto Concrete = StaticCastSharedPtr<ROSMessages::rasm::RASM_GOAL_MSG>(msg);
             if (Concrete.IsValid()) {
@@ -123,8 +91,14 @@ void AMyActor::InitializeTopics() {
         // Subscribe to the topic
         topic_goal->Subscribe(GoalCallback);
         topic_cmd_vel->Subscribe(CmdVelCallback);
-    }
-    else {
+
+        if (rosinst->bSimulateTime) {
+            topic_clock = NewObject<UTopic>(UTopic::StaticClass());
+            topic_clock->Init(rosinst->ROSIntegrationCore, TEXT("/clock"), TEXT("rosgraph_msgs/Clock"));
+            topic_clock->Advertise();
+        }
+
+    } else {
         UE_LOG(LogTemp, Warning, TEXT("Setting up ROS instance failed!"));
     }
 }
@@ -134,7 +108,7 @@ void AMyActor::PublishWheelData(int32 rear_left, int32 rear_right, int32 front_l
         return;
     }
 
-    if (topic_wheels->IsAdvertising()) {
+    if (topic_wheels && topic_wheels->IsAdvertising()) {
         ROSMessages::std_msgs::MultiArrayDimension MessageDim;
 
         MessageDim.label = FString(TEXT("wheels"));
@@ -160,7 +134,7 @@ void AMyActor::PublishOdometry(FVector position, FQuat orientation, FVector line
         return;
     }
 
-    if (topic_odom->IsAdvertising()) {
+    if (topic_odom && topic_odom->IsAdvertising()) {
         ROSMessages::std_msgs::Header MessageHeader(odom_seq++, FROSTime::Now(), FString(TEXT("odom")));
 
         TArray<double> covariance;
@@ -200,31 +174,57 @@ void AMyActor::PublishOdometry(FVector position, FQuat orientation, FVector line
     }
 }
 
-void AMyActor::PublishIMU(FQuat orientation, FVector angular_velocity, FVector linear_acceleration) {
+void AMyActor::PublishClock() {
     if (paused) {
         return;
     }
 
-    if (topic_imu->IsAdvertising()) {
-        ROSMessages::std_msgs::Header MessageHeader(imu_seq++, FROSTime::Now(), FString(TEXT("base_link")));
+    if (Cast<UROSIntegrationGameInstance>(GetGameInstance())->bSimulateTime && topic_clock && topic_clock->IsAdvertising()) {
+        float current_time = GetWorld()->GetTimeSeconds();
 
-        TArray<double> covariance;
-        covariance.Init(0.0, 9);
+        unsigned long seconds = (unsigned long)current_time;
+        unsigned long nanoseconds = (unsigned long)((current_time - seconds) * 1000000000ul);
 
-        ROSMessages::geometry_msgs::Quaternion MessageOrientation(orientation);
-        ROSMessages::geometry_msgs::Vector3 MessageAngularVelocity(angular_velocity);
-        ROSMessages::geometry_msgs::Vector3 MessageLinearAcceleration(linear_acceleration);
-
-        TSharedPtr<ROSMessages::sensor_msgs::Imu> MessageIMU(new ROSMessages::sensor_msgs::Imu());
-        MessageIMU->header = MessageHeader;
-        MessageIMU->orientation = MessageOrientation;
-        MessageIMU->angular_velocity = MessageAngularVelocity;
-        MessageIMU->linear_acceleration = MessageLinearAcceleration;
-
-        MessageIMU->orientation_covariance = covariance;
-        MessageIMU->angular_velocity_covariance = covariance;
-        MessageIMU->linear_acceleration_covariance = covariance;
-
-        topic_imu->Publish(MessageIMU);
+        TSharedPtr<ROSMessages::rosgraph_msgs::Clock> ClockMessage(new ROSMessages::rosgraph_msgs::Clock(FROSTime(seconds, nanoseconds)));
+        topic_clock->Publish(ClockMessage);
     }
+}
+
+float AMyActor::GetSurface(FVector2D Point, bool bDrawDebugLines) {
+    UWorld* World{ this->GetWorld() };
+
+    if (World) {
+        FVector StartLocation{ Point.X, Point.Y, 10000 };    // Raytrace starting point.
+        FVector EndLocation{ Point.X, Point.Y, -10000 };     // Raytrace end point.
+
+        // Raytrace for overlapping actors.
+        FHitResult HitResult;
+        World->LineTraceSingleByObjectType(
+            OUT HitResult,
+            StartLocation,
+            EndLocation,
+            FCollisionObjectQueryParams(ECollisionChannel::ECC_WorldStatic),
+            FCollisionQueryParams()
+        );
+
+        // Draw debug line.
+        if (bDrawDebugLines) {
+            FColor LineColor;
+
+            if (HitResult.GetActor()) {
+                LineColor = FColor::Red;
+            } else {
+                LineColor = FColor::Green;
+            }
+
+            DrawDebugLine(World, StartLocation, EndLocation, LineColor, true, 5.f, 0.f, 10.f);
+        }
+
+        // Return Z location.
+        if (HitResult.GetActor()) {
+            return HitResult.ImpactPoint.Z;
+        }
+    }
+
+    return 0;
 }
