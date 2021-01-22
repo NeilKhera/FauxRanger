@@ -31,6 +31,11 @@ void AMyActor::BeginPlay() {
 void AMyActor::Tick(float DeltaTime) {
     Super::Tick(DeltaTime);
 
+    if (update_sun) {
+        update_sun = false;
+        this->VectorEvent(sun_vector);
+    }
+
     if (spawn_waypoint) {
         spawn_waypoint = false;
         this->SpawnEvent(waypoint_location, waypoint_rotation, waypoint_scale);
@@ -64,7 +69,8 @@ void AMyActor::InitializeTopics() {
         std::function<void(TSharedPtr<FROSBaseMsg>)> SunSeekerCallback = [this](TSharedPtr<FROSBaseMsg> msg) -> void {
             auto Concrete = StaticCastSharedPtr<ROSMessages::geometry_msgs::Vector3>(msg);
             if (Concrete.IsValid()) {
-                this->VectorEvent(Concrete->x, Concrete->y, Concrete->z);
+                this->sun_vector = FVector(Concrete->x, Concrete->y, Concrete->z);
+                this->update_sun = true;
             }
         };
 
@@ -89,6 +95,7 @@ void AMyActor::InitializeTopics() {
         };
 
         // Subscribe to the topic
+        topic_sun_seeker->Subscribe(SunSeekerCallback);
         topic_goal->Subscribe(GoalCallback);
         topic_cmd_vel->Subscribe(CmdVelCallback);
 
@@ -104,10 +111,6 @@ void AMyActor::InitializeTopics() {
 }
 
 void AMyActor::PublishWheelData(int32 rear_left, int32 rear_right, int32 front_left, int32 front_right) {
-    if (paused) {
-        return;
-    }
-
     if (topic_wheels && topic_wheels->IsAdvertising()) {
         ROSMessages::std_msgs::MultiArrayDimension MessageDim;
 
@@ -130,10 +133,6 @@ void AMyActor::PublishWheelData(int32 rear_left, int32 rear_right, int32 front_l
 }
 
 void AMyActor::PublishOdometry(FVector position, FQuat orientation, FVector linear_velocity, FVector angular_velocity) {
-    if (paused) {
-        return;
-    }
-
     if (topic_odom && topic_odom->IsAdvertising()) {
         ROSMessages::std_msgs::Header MessageHeader(odom_seq++, FROSTime::Now(), FString(TEXT("odom")));
 
@@ -175,10 +174,6 @@ void AMyActor::PublishOdometry(FVector position, FQuat orientation, FVector line
 }
 
 void AMyActor::PublishClock() {
-    if (paused) {
-        return;
-    }
-
     if (Cast<UROSIntegrationGameInstance>(GetGameInstance())->bSimulateTime && topic_clock && topic_clock->IsAdvertising()) {
         float current_time = GetWorld()->GetTimeSeconds();
 

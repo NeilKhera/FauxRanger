@@ -25,8 +25,10 @@ private:
 	uint32 odom_seq = 0;
 
 	bool paused = false;
+	bool update_sun = false;
 	bool spawn_waypoint = false;
 
+	FVector sun_vector;
 	FVector waypoint_location;
 	FRotator waypoint_rotation;
 	FVector waypoint_scale;
@@ -40,7 +42,7 @@ public:
 	virtual void Tick(float DeltaTime) override;
 
 	UFUNCTION(BlueprintImplementableEvent, Category = "Callback")
-	void VectorEvent(const float & x, const float & y, const float & z);
+	void VectorEvent(const FVector & angles);
 
 	UFUNCTION(BlueprintImplementableEvent, Category = "Callback")
 	void SpawnEvent(const FVector & location, const FRotator & rotation, const FVector & scale);
