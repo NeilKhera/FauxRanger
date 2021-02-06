@@ -77,9 +77,9 @@ void AMyActor::InitializeTopics() {
         std::function<void(TSharedPtr<FROSBaseMsg>)> GoalCallback = [this](TSharedPtr<FROSBaseMsg> msg) -> void {
             auto Concrete = StaticCastSharedPtr<ROSMessages::rasm::RASM_GOAL_MSG>(msg);
             if (Concrete.IsValid()) {
-                this->waypoint_location = FVector(Concrete->origin_x_meters * 100, Concrete->origin_y_meters * 100, GetSurface(FVector2D(Concrete->origin_x_meters * 100, Concrete->origin_y_meters * 100), false));
+                this->waypoint_location = FVector(Concrete->origin_x_meters * 100, - Concrete->origin_y_meters * 100, GetSurface(FVector2D(Concrete->origin_x_meters * 100, - Concrete->origin_y_meters * 100), false));
                 this->waypoint_rotation = FRotator(0.0f, 0.0f, Concrete->orientation_radians);
-                this->waypoint_scale = FVector(Concrete->length_meters / 2, Concrete->width_meters / 2, 1.0f);
+                this->waypoint_scale = FVector(Concrete->length_meters, Concrete->width_meters, 1.0f);
 
                 this->spawn_waypoint = true;
             }
