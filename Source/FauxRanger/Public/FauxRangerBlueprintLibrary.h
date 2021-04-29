@@ -5,8 +5,8 @@
 #include "FauxRangerBlueprintLibrary.generated.h"
 
 UCLASS()
-class FAUXRANGER_API UFauxRangerBlueprintLibrary : public UBlueprintFunctionLibrary
-{
+class FAUXRANGER_API UFauxRangerBlueprintLibrary : public UBlueprintFunctionLibrary {
+
 	GENERATED_BODY()
 
 public:
