@@ -4,6 +4,3 @@
 [submodule "Plugins/ROSIntegration"]
 	path = Plugins/ROSIntegration
 	url = https://github.com/Nekhera/ROSIntegration
-[submodule "Plugins/VictoryPlugin"]
-	path = Plugins/VictoryPlugin
-	url = https://github.com/EverNewJoy/VictoryPlugin.git
