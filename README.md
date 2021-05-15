@@ -2,17 +2,21 @@
 
 ## Installation
 ### Download Executable
-The Windows and Linux executables can be found under the [Releases](https://github.com/Nekhera/FauxRanger/releases) section.
+The simulator executables can be found under the [Releases](https://github.com/Nekhera/FauxRanger/releases) section.
 ### Build Yourself
 #### Prereqs
 * Unreal Engine v4.26
 * [Brushify.io Moon Pack](https://www.unrealengine.com/marketplace/en-US/product/brushify-moon-pack)
-> Ensure these are installed before opening the project
+* Building on Windows
+Follow [Setting Up Visual Studio for Unreal Engine](https://docs.unrealengine.com/en-US/ProductionPipelines/DevelopmentSetup/VisualStudioSetup/index.html) and [Cross-Compiling for Linux](https://docs.unrealengine.com/en-US/SharingAndReleasing/Linux/GettingStarted/index.html) if building for Linux on Windows.
+* Building on Mac
+Install XCode from the Apple Mac Store
+
 #### Build
 1. Clone the repository with submodules
 `git clone --recursive https://github.com/Nekhera/FauxRanger.git`
 2. Open FauxRanger.uproject.
-3. `File > Package Project > Windows/Linux`
+3. `File > Package Project > Windows/Linux/Mac`
 4. That's it! :)
 ## How to run
 ### ROS setup
@@ -32,19 +36,21 @@ Run the TCP server with the following command
 ### Simulator setup
 > Windows version: run `FauxRanger.exe`
 > Linux version: run `./FauxRanger.sh`
+> Mac version: run `FauxRanger.app`
 
-The rover model may be changed in the Settings menu. Select an Environment to spawn the rover. ROS connection is disabled by default. To enable ROS go to the Pause Menu, enter the Network IP of ROS machine and toggle ROS on. If a connection is succesfully established, the client connection will be displayed in the roslaunch window. The simulator is now ready for use.
+Select an Environment to spawn the rover. ROS connection is disabled by default. To enable ROS go to the Pause Menu, enter the Network IP of ROS machine and toggle ROS on. If a connection is succesfully established, the client connection will be displayed in the roslaunch window. The simulator is now ready for use.
 
 ### Driving the rover
 
 #### Keyboard Controls
 * WASD to drive the rover
 * X to stop
+* P to toggle panel
+* K and L to toggle Dot and Line laser projectors (MoonRanger only)
+* O for solar panel camera view (PitRanger only)
 * Left/Right arrow keys to cycle between camera views
 * C for third-person camera
-* P to toggle panel
 * ESC or M to Pause Menu
-* O for solar panel camera view (PitRanger only)
 
 #### ROS Controls
 The rover may be driven through ROS `geometry_msgs/Twist` messages published on the `/moon_ranger_velocity_controller/cmd_vel` ROStopic.
