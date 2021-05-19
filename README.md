@@ -29,6 +29,10 @@ To enable ROS communication, a ROSbridge server must be started on a compatible 
 
 To build and install ROSbridge Suite v0.11.10, checkout [this](https://github.com/RobotWebTools/rosbridge_suite/commit/b04345fab6b2394adb74ec29297356d8ec552be9) commit into your catkin workspace and build as normal. The newest version of the apt package (ros-melodic-rosbridge-suite) is NOT supported.
 
+Supporting packages
+`sudo apt instal ros-melodic-rosauth`
+`pip install tornado future pymongo`
+
 Run the TCP server with the following command
 
 `roslaunch rosbridge_server rosbridge_tcp.launch bson_only_mode:=True`
