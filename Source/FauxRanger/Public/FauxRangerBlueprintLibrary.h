@@ -10,6 +10,7 @@ class FAUXRANGER_API UFauxRangerBlueprintLibrary : public UBlueprintFunctionLibr
 	GENERATED_BODY()
 
 public:
+
 	UFUNCTION(BlueprintPure, Category = "Conversions")
 	static FQuat FromRotator(const FRotator& From);
 };
