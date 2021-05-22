@@ -1,6 +1,7 @@
 #include "MyActor.h"
 #include "ROSTime.h"
-#include "Runtime/Engine/Public/DrawDebugHelpers.h"
+
+#include "FauxRangerBlueprintLibrary.h"
 
 #include "ROSIntegration/Classes/RI/Topic.h"
 #include "ROSIntegration/Classes/ROSIntegrationGameInstance.h"
@@ -56,15 +57,18 @@ void AMyActor::InitializeTopics() {
         topic_cmd_vel = NewObject<UTopic>(UTopic::StaticClass());
         topic_wheels = NewObject<UTopic>(UTopic::StaticClass());
         topic_odom = NewObject<UTopic>(UTopic::StaticClass());
+        topic_IMU = NewObject<UTopic>(UTopic::StaticClass());
 
         topic_sun_seeker->Init(rosinst->ROSIntegrationCore, TEXT("/sun_seeker/vector"), TEXT("geometry_msgs/Vector3"));
         topic_goal->Init(rosinst->ROSIntegrationCore, TEXT("/rover_executive/goal_command"), TEXT("rasm/RASM_GOAL_MSG"));
         topic_cmd_vel->Init(rosinst->ROSIntegrationCore, TEXT("/moon_ranger_velocity_controller/cmd_vel"), TEXT("geometry_msgs/Twist"));
         topic_wheels->Init(rosinst->ROSIntegrationCore, TEXT("/wheels"), TEXT("std_msgs/Int32MultiArray"));
         topic_odom->Init(rosinst->ROSIntegrationCore, TEXT("/moon_ranger_velocity_controller/odom"), TEXT("nav_msgs/Odometry"));
+        topic_IMU->Init(rosinst->ROSIntegrationCore, TEXT("/imu"), TEXT("sensor_msgs/Imu"));
 
         topic_wheels->Advertise();
         topic_odom->Advertise();
+        topic_IMU->Advertise();
 
         std::function<void(TSharedPtr<FROSBaseMsg>)> SunSeekerCallback = [this](TSharedPtr<FROSBaseMsg> msg) -> void {
             auto Concrete = StaticCastSharedPtr<ROSMessages::geometry_msgs::Vector3>(msg);
@@ -77,7 +81,7 @@ void AMyActor::InitializeTopics() {
         std::function<void(TSharedPtr<FROSBaseMsg>)> GoalCallback = [this](TSharedPtr<FROSBaseMsg> msg) -> void {
             auto Concrete = StaticCastSharedPtr<ROSMessages::rasm::RASM_GOAL_MSG>(msg);
             if (Concrete.IsValid()) {
-                this->waypoint_location = FVector(Concrete->origin_x_meters * 100, - Concrete->origin_y_meters * 100, GetSurface(FVector2D(Concrete->origin_x_meters * 100, - Concrete->origin_y_meters * 100), false));
+                this->waypoint_location = FVector(Concrete->origin_x_meters * 100, - Concrete->origin_y_meters * 100, UFauxRangerBlueprintLibrary::GetSurface(this->GetWorld(), FVector2D(Concrete->origin_x_meters * 100, - Concrete->origin_y_meters * 100), false));
                 this->waypoint_rotation = FRotator(0.0f, 0.0f, Concrete->orientation_radians);
                 this->waypoint_scale = FVector(Concrete->length_meters, Concrete->width_meters, 1.0f);
 
@@ -173,6 +177,29 @@ void AMyActor::PublishOdometry(FVector position, FQuat orientation, FVector line
     }
 }
 
+void AMyActor::PublishIMU(FQuat orientation, FVector angular_velocity, FVector linear_acceleration) {
+    ROSMessages::std_msgs::Header MessageHeader(imu_seq++, FROSTime::Now(), FString(TEXT("base_link")));
+
+    TArray<double> covariance;
+    covariance.Init(0.0, 9);
+
+    ROSMessages::geometry_msgs::Quaternion MessageOrientation(orientation);
+    ROSMessages::geometry_msgs::Vector3 MessageAngularVelocity(angular_velocity);
+    ROSMessages::geometry_msgs::Vector3 MessageLinearAcceleration(linear_acceleration);
+
+    TSharedPtr<ROSMessages::sensor_msgs::Imu> MessageIMU(new ROSMessages::sensor_msgs::Imu());
+    MessageIMU->header = MessageHeader;
+    MessageIMU->orientation = MessageOrientation;
+    MessageIMU->angular_velocity = MessageAngularVelocity;
+    MessageIMU->linear_acceleration = MessageLinearAcceleration;
+
+    MessageIMU->orientation_covariance = covariance;
+    MessageIMU->angular_velocity_covariance = covariance;
+    MessageIMU->linear_acceleration_covariance = covariance;
+
+    topic_IMU->Publish(MessageIMU);
+}
+
 void AMyActor::PublishClock() {
     if (Cast<UROSIntegrationGameInstance>(GetGameInstance())->bSimulateTime && topic_clock && topic_clock->IsAdvertising()) {
         float current_time = GetWorld()->GetTimeSeconds();
@@ -183,43 +210,4 @@ void AMyActor::PublishClock() {
         TSharedPtr<ROSMessages::rosgraph_msgs::Clock> ClockMessage(new ROSMessages::rosgraph_msgs::Clock(FROSTime(seconds, nanoseconds)));
         topic_clock->Publish(ClockMessage);
     }
-}
-
-float AMyActor::GetSurface(FVector2D Point, bool bDrawDebugLines) {
-    UWorld* World{ this->GetWorld() };
-
-    if (World) {
-        FVector StartLocation{ Point.X, Point.Y, 10000 };    // Raytrace starting point.
-        FVector EndLocation{ Point.X, Point.Y, -10000 };     // Raytrace end point.
-
-        // Raytrace for overlapping actors.
-        FHitResult HitResult;
-        World->LineTraceSingleByObjectType(
-            OUT HitResult,
-            StartLocation,
-            EndLocation,
-            FCollisionObjectQueryParams(ECollisionChannel::ECC_WorldStatic),
-            FCollisionQueryParams()
-        );
-
-        // Draw debug line.
-        if (bDrawDebugLines) {
-            FColor LineColor;
-
-            if (HitResult.GetActor()) {
-                LineColor = FColor::Red;
-            } else {
-                LineColor = FColor::Green;
-            }
-
-            DrawDebugLine(World, StartLocation, EndLocation, LineColor, true, 5.f, 0.f, 10.f);
-        }
-
-        // Return Z location.
-        if (HitResult.GetActor()) {
-            return HitResult.ImpactPoint.Z;
-        }
-    }
-
-    return 0;
 }

@@ -18,6 +18,7 @@ public:
 
 	UPROPERTY() class UTopic* topic_wheels;
 	UPROPERTY() class UTopic* topic_odom;
+	UPROPERTY() class UTopic* topic_IMU;
 	UPROPERTY() class UTopic* topic_clock;
 
 private:
@@ -63,10 +64,9 @@ public:
 	void PublishOdometry(FVector position, FQuat orientation, FVector linear_velocity, FVector angular_velocity);
 
 	UFUNCTION(BlueprintCallable, Category = "Publisher")
-	void PublishClock();
+	void PublishIMU(FQuat orientation, FVector angular_velocity, FVector linear_acceleration);
 
-protected:
-	UFUNCTION(BlueprintPure, meta = (AdvancedDisplay = "bDrawDebugLines"))
-	float GetSurface(FVector2D Point, bool bDrawDebugLines = false);
+	UFUNCTION(BlueprintCallable, Category = "Publisher")
+	void PublishClock();
 
 };
