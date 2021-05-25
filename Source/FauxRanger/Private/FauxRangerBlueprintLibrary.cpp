@@ -42,7 +42,7 @@ float UFauxRangerBlueprintLibrary::GetSurface(const UWorld* World, const FVector
             OUT HitResult,
             StartLocation,
             EndLocation,
-            FCollisionObjectQueryParams(ECollisionChannel::ECC_WorldStatic),
+            FCollisionObjectQueryParams(ECollisionChannel::ECC_Visibility),
             FCollisionQueryParams()
         );
 
