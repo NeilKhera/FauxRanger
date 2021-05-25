@@ -64,7 +64,7 @@ void AMyActor::InitializeTopics() {
         topic_cmd_vel->Init(rosinst->ROSIntegrationCore, TEXT("/moon_ranger_velocity_controller/cmd_vel"), TEXT("geometry_msgs/Twist"));
         topic_wheels->Init(rosinst->ROSIntegrationCore, TEXT("/wheels"), TEXT("std_msgs/Int32MultiArray"));
         topic_odom->Init(rosinst->ROSIntegrationCore, TEXT("/moon_ranger_velocity_controller/odom"), TEXT("nav_msgs/Odometry"));
-        topic_IMU->Init(rosinst->ROSIntegrationCore, TEXT("/imu"), TEXT("sensor_msgs/Imu"));
+        topic_IMU->Init(rosinst->ROSIntegrationCore, TEXT("/imu/data"), TEXT("sensor_msgs/Imu"));
 
         topic_wheels->Advertise();
         topic_odom->Advertise();
