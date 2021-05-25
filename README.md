@@ -5,19 +5,19 @@
 The simulator executables can be found under the [Releases](https://github.com/Nekhera/FauxRanger/releases) section.
 ### Build Yourself
 #### Prereqs
-* Unreal Engine v4.26
+* [Git LFS](https://docs.github.com/en/github/managing-large-files/versioning-large-files/installing-git-large-file-storage)
+* [Unreal Engine v4.26](https://www.unrealengine.com/en-US/download)
 * [Brushify.io Moon Pack](https://www.unrealengine.com/marketplace/en-US/product/brushify-moon-pack)
-* Building on Windows
-Follow [Setting Up Visual Studio for Unreal Engine](https://docs.unrealengine.com/en-US/ProductionPipelines/DevelopmentSetup/VisualStudioSetup/index.html) and [Cross-Compiling for Linux](https://docs.unrealengine.com/en-US/SharingAndReleasing/Linux/GettingStarted/index.html) if building for Linux on Windows.
-* Building on Mac
-Install XCode from the Apple Mac Store
+* `Building on Windows:` [Setting Up Visual Studio for Unreal Engine](https://docs.unrealengine.com/en-US/ProductionPipelines/DevelopmentSetup/VisualStudioSetup/index.html) and (optionally) [Cross-Compiling for Linux](https://docs.unrealengine.com/en-US/SharingAndReleasing/Linux/GettingStarted/index.html).
+* `Building on Mac:` Install XCode from the Apple Mac Store
 
 #### Build
 1. Clone the repository with submodules
 `git clone --recursive https://github.com/Nekhera/FauxRanger.git`
-2. Open FauxRanger.uproject.
-3. `File > Package Project > Windows/Linux/Mac`
-4. That's it! :)
+2. Install the Brushify.io Moon Pack through the Epic Marketplace (or alternately, place the downloaded package into the Content/ folder)
+3. Open FauxRanger.uproject.
+4. `File > Package Project > Windows/Linux/Mac`
+5. That's it! :)
 ## How to run
 ### ROS setup
 To enable ROS communication, a ROSbridge server must be started on a compatible system. The following configuration has been tested:
@@ -62,17 +62,23 @@ The rover may be driven through ROS `geometry_msgs/Twist` messages published on 
 ## ROStopics
 The following ROStopics are published and subscribed to by the simulator
 ### Publishers
-* /stereo/left/image_raw
-* /stereo/left/camera_info
-* /stereo/left/tf
-* /stereo/right/image_raw
-* /stereo/right/camera_info
-* /stereo/right/tf
+* /stereo/front/left/image_raw
+* /stereo/front/left/camera_info
+* /stereo/front/right/image_raw
+* /stereo/front/right/camera_info
+* /stereo/rear/left/image_raw
+* /stereo/rear/left/camera_info
+* /stereo/rear/right/image_raw
+* /stereo/rear/right/camera_info
+* /imu/data
 * /wheels
 * /moon_ranger_velocity_controller/odom
 
 ### Subscribers
+* /sun_seeker/vector
+* /rover_executive/goal_command
 * /moon_ranger_velocity_controller/cmd_vel
+
 ## License
 MIT License. Copyright (c) 2020 Neil Khera
 
