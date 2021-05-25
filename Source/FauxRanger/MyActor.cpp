@@ -53,22 +53,22 @@ void AMyActor::InitializeTopics() {
     if (rosinst && rosinst->bConnectToROS) {
         // Initialize a topic
         topic_sun_seeker = NewObject<UTopic>(UTopic::StaticClass());
-        topic_goal = NewObject<UTopic>(UTopic::StaticClass());
-        topic_cmd_vel = NewObject<UTopic>(UTopic::StaticClass());
-        topic_wheels = NewObject<UTopic>(UTopic::StaticClass());
-        topic_odom = NewObject<UTopic>(UTopic::StaticClass());
-        topic_IMU = NewObject<UTopic>(UTopic::StaticClass());
+        topic_goal       = NewObject<UTopic>(UTopic::StaticClass());
+        topic_cmd_vel    = NewObject<UTopic>(UTopic::StaticClass());
+        topic_wheels     = NewObject<UTopic>(UTopic::StaticClass());
+        topic_odom       = NewObject<UTopic>(UTopic::StaticClass());
+        topic_IMU        = NewObject<UTopic>(UTopic::StaticClass());
 
-        topic_sun_seeker->Init(rosinst->ROSIntegrationCore, TEXT("/sun_seeker/vector"), TEXT("geometry_msgs/Vector3"));
-        topic_goal->Init(rosinst->ROSIntegrationCore, TEXT("/rover_executive/goal_command"), TEXT("rasm/RASM_GOAL_MSG"));
-        topic_cmd_vel->Init(rosinst->ROSIntegrationCore, TEXT("/moon_ranger_velocity_controller/cmd_vel"), TEXT("geometry_msgs/Twist"));
-        topic_wheels->Init(rosinst->ROSIntegrationCore, TEXT("/wheels"), TEXT("std_msgs/Int32MultiArray"));
-        topic_odom->Init(rosinst->ROSIntegrationCore, TEXT("/moon_ranger_velocity_controller/odom"), TEXT("nav_msgs/Odometry"));
-        topic_IMU->Init(rosinst->ROSIntegrationCore, TEXT("/imu/data"), TEXT("sensor_msgs/Imu"));
+        topic_sun_seeker -> Init( rosinst->ROSIntegrationCore, GetTopic(TEXT("SunSeekerTopic"), TEXT("/sun_seeker/vector"))                      , TEXT("geometry_msgs/Vector3")    );
+        topic_goal       -> Init( rosinst->ROSIntegrationCore, GetTopic(TEXT("GoalTopic")     , TEXT("/rover_executive/goal_command"))           , TEXT("rasm/RASM_GOAL_MSG")       );
+        topic_cmd_vel    -> Init( rosinst->ROSIntegrationCore, GetTopic(TEXT("CmdVelTopic")   , TEXT("/moon_ranger_velocity_controller/cmd_vel")), TEXT("geometry_msgs/Twist")      );
+        topic_wheels     -> Init( rosinst->ROSIntegrationCore, GetTopic(TEXT("WheelTopic")    , TEXT("/wheels"))                                 , TEXT("std_msgs/Int32MultiArray") );
+        topic_odom       -> Init( rosinst->ROSIntegrationCore, GetTopic(TEXT("OdomTopic")     , TEXT("/moon_ranger_velocity_controller/odom"))   , TEXT("nav_msgs/Odometry")        );
+        topic_IMU        -> Init( rosinst->ROSIntegrationCore, GetTopic(TEXT("IMUTopic")      , TEXT("/imu/data"))                               , TEXT("sensor_msgs/Imu")          );
 
-        topic_wheels->Advertise();
-        topic_odom->Advertise();
-        topic_IMU->Advertise();
+        topic_wheels -> Advertise();
+        topic_odom   -> Advertise();
+        topic_IMU    -> Advertise();
 
         std::function<void(TSharedPtr<FROSBaseMsg>)> SunSeekerCallback = [this](TSharedPtr<FROSBaseMsg> msg) -> void {
             auto Concrete = StaticCastSharedPtr<ROSMessages::geometry_msgs::Vector3>(msg);
@@ -99,16 +99,15 @@ void AMyActor::InitializeTopics() {
         };
 
         // Subscribe to the topic
-        topic_sun_seeker->Subscribe(SunSeekerCallback);
-        topic_goal->Subscribe(GoalCallback);
-        topic_cmd_vel->Subscribe(CmdVelCallback);
+        topic_sun_seeker ->Subscribe(SunSeekerCallback);
+        topic_goal       ->Subscribe(GoalCallback);
+        topic_cmd_vel    ->Subscribe(CmdVelCallback);
 
         if (rosinst->bSimulateTime) {
             topic_clock = NewObject<UTopic>(UTopic::StaticClass());
             topic_clock->Init(rosinst->ROSIntegrationCore, TEXT("/clock"), TEXT("rosgraph_msgs/Clock"));
             topic_clock->Advertise();
         }
-
     } else {
         UE_LOG(LogTemp, Warning, TEXT("Setting up ROS instance failed!"));
     }
@@ -210,4 +209,12 @@ void AMyActor::PublishClock() {
         TSharedPtr<ROSMessages::rosgraph_msgs::Clock> ClockMessage(new ROSMessages::rosgraph_msgs::Clock(FROSTime(seconds, nanoseconds)));
         topic_clock->Publish(ClockMessage);
     }
+}
+
+FString AMyActor::GetTopic(const FString key, const FString default_topic) {
+    FString param = UFauxRangerBlueprintLibrary::GetConfigParam(TEXT("ROS"), key);
+    if (!param.IsEmpty()) {
+        return param;
+    }
+    return default_topic;
 }
