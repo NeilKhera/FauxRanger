@@ -69,4 +69,7 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "Publisher")
 	void PublishClock();
 
+private:
+	FString GetTopic(const FString key, const FString default_topic);
+
 };
