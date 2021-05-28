@@ -75,9 +75,14 @@ DerivedDataCache/*
 
 # Exclude Brushify
 Content/Brushify/*
+
+# Exclude Megascans
 Content/Megascans/*
 Content/MSPresets/*
-Plugins/*
-Content/FauxRanger/Maps/Level_MoonRanger_1mpp.umap
 
+# Exclude Plugins
+Plugins/*
+
+# Exclude Large Maps
+Content/FauxRanger/Maps/Level_MoonRanger_1mpp.umap
 Content/FauxRanger/Maps/Level_MoonRanger.umap
