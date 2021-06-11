@@ -1,9 +1,0 @@
-[submodule "Plugins/ROSIntegrationVision"]
-	path = Plugins/ROSIntegrationVision
-	url = https://github.com/Nekhera/ROSIntegrationVision
-[submodule "Plugins/ROSIntegration"]
-	path = Plugins/ROSIntegration
-	url = https://github.com/Nekhera/ROSIntegration
-[submodule "Source/mINI"]
-	path = Source/mINI
-	url = https://github.com/pulzed/mINI.git
