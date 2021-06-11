@@ -1,2 +1,2 @@
 ### FauxRanger has [moved](https://dev.azure.com/nkhera/FauxRanger)
-Releases continue to be posted [here](https://github.com/NeilKhera/FauxRanger/releases)
+New releases will be posted [here](https://drive.google.com/drive/folders/1I8Di8MsIQ4SHygDuxjjybFcOnPoYLpRC?usp=sharing)
